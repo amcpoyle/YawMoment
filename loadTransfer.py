@@ -1,0 +1,6 @@
+"""
+Helper function for calculating load on each tire
+"""
+
+def load(Ax, Ay, downforce, drag):
+    
