@@ -4,7 +4,12 @@ import numpy as np
 def main():
     car = Car("PR38", "VehicleParameters.xlsx")
     car.load_data()
-    
+   
+
+    # some other variables that are calculated from vehicle params
+    downforce = 0.5*car.car_params['rho']*car.car_params['refArea']*car.car_params['dfCoeff']*(v**2)
+    drag = 0.5*car.car_params['rho']*car.car_params['refArea']*car.car_params['dragCoeff']*(v**2)
+
     # TODO: could put all this stuff in xlsx file to make it easier to change with GUI
     tire = [car.car_params['lmuy']*2.7309, car.car_params['lmuy']*-0.275, 8.5, 1.8]
     maxAlpha = np.deg2rad(20)
