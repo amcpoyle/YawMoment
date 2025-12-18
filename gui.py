@@ -29,7 +29,11 @@ class PlotTab(QWidget):
         super().__init__()
         self.data_tab = data_tab
         self.graph_counter = 0
-        colors = ['red', 'blue']
+        self.colors = ['red', 'blue']
+
+        self.chosen_colors = {}
+
+        self.row_layout_list = []
 
         # integrating web engine
         self.browser = QWebEngineView()
@@ -42,42 +46,46 @@ class PlotTab(QWidget):
 
         
         # layout
-        layout = QVBoxLayout()
-        layout.addWidget(self.generate_button)
-        layout.addWidget(self.clear_button)
-        layout.addWidget(self.browser)
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.generate_button)
+        self.layout.addWidget(self.clear_button)
+        self.layout.addWidget(self.browser)
 
-        row_layout = QHBoxLayout()
-
-        # add a color (TODO: and show) widget for every active graph
-        for i in range(self.graph_counter + 1):
-            current_graph_num = i + 1
-            graph_label = QLabel("Graph {}".format(current_graph_num))
-            lines1_dropdown = QComboBox()
-            lines1_dropdown.addItems(colors)
-            lines1_dropdown.setCurrentIndex(0)
-            
-            lines2_dropdown = QComboBox()
-            lines2_dropdown.addItems(colors)
-            lines2_dropdown.setCurrentIndex(1)
-
-            row_layout.addWidget(graph_label)
-            row_layout.addWidget(lines1_dropdown)
-            row_layout.addWidget(lines2_dropdown)
-
-            lines1_dropdown.currentTextChanged.connect(partial(self.color_change, source_grpah=current_graph_num, subgraph=1))
-
-            lines2_dropdown.currentTextChanged.connect(partial(self.color_change, source_graph=current_graph_num, subgraph=2))
-
-        self.setLayout(layout)
-
-        layout.addLayout(row_layout)
+        self.setLayout(self.layout)
 
         self.generate_button.clicked.connect(self.generate_plot)
         self.clear_button.clicked.connect(self.clear_plot)
 
     def generate_plot(self):
         # TODO: need to pass colors through to main to get them into build_plot
+
+        # new layout for this row
+        row_layout = QHBoxLayout()
+
+
+        # add a color (TODO: and show) widget for every active graph
+        current_graph_num = self.graph_counter
+        graph_label = QLabel("Graph {}".format(current_graph_num))
+        lines1_dropdown = QComboBox()
+        lines1_dropdown.addItems(self.colors)
+        lines1_dropdown.setCurrentIndex(0)
+        
+        lines2_dropdown = QComboBox()
+        lines2_dropdown.addItems(self.colors)
+        lines2_dropdown.setCurrentIndex(1)
+
+        row_layout.addWidget(graph_label)
+        row_layout.addWidget(lines1_dropdown)
+        row_layout.addWidget(lines2_dropdown)
+
+        lines1_dropdown.currentTextChanged.connect(partial(self.color_change, source_grpah=current_graph_num, subgraph=1))
+
+        lines2_dropdown.currentTextChanged.connect(partial(self.color_change, source_graph=current_graph_num, subgraph=2))
+
+        self.layout.addLayout(row_layout)
+
+        self.row_layout_list.append(row_layout)
+
 
         self.graph_df = main(self.data_tab.vehicle_params, self.data_tab.vehicle_params['velocity'])
         if self.graph_counter == 0:
@@ -99,6 +107,14 @@ class PlotTab(QWidget):
         self.browser.setHtml(empty_fig.to_html(include_plotlyjs="cdn"))
         self.graph_counter = 0
 
+        for row_layout in self.row_layout_list:
+            while row_layout.count():
+                item = row_layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+
+        
     def color_change(self, source_graph, subgraph):
         # TODO: yikes
         pass
@@ -157,7 +173,7 @@ class dataTab(QWidget):
         velocityLabel = QLabel("velocity")
         velocityEdit = QLineEdit()
         window_width = self.window().width()
-        velocityEdit.setMaximumWidth(int(window_width*0.25))
+        velocityEdit.setMaximumWidth(250)
         velocityEdit.setAlignment(Qt.AlignRight)
 
         new_row_layout.addWidget(velocityLabel)
