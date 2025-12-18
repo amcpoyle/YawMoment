@@ -24,12 +24,18 @@ from PySide6.QtWidgets import (
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl
 
+# TODO: stats tab with important statistics from each graph?? Maybe??
+
 class PlotTab(QWidget):
     def __init__(self, title, data_tab):
         super().__init__()
         self.data_tab = data_tab
         self.graph_counter = 0
-        self.colors = ['red', 'blue', 'green', 'orange']
+        self.colors = ['red', 'blue', 'green', 'orange', 'yellow',
+                       'purple', 'pink', 'black', 'white', 
+                       'goldenrod', 'magenta', 'crimson', 'navy',
+                       'dodgerblue', 'skyblue', 'teal', 'lime', 'darkgreen',
+                       'palegreen', 'lavender', 'chocolate']
         self.graph_df_list = []
         self.velocity_list = []
 
@@ -59,9 +65,7 @@ class PlotTab(QWidget):
         self.clear_button.clicked.connect(self.clear_plot)
 
     def generate_plot(self):
-        # TODO: need to pass colors through to main to get them into build_plot
 
-        print("graph counter: ", self.graph_counter)
         # new layout for this row
         row_layout = QHBoxLayout()
 
@@ -77,9 +81,12 @@ class PlotTab(QWidget):
         lines2_dropdown.addItems(self.colors)
         lines2_dropdown.setCurrentIndex(1)
 
+        # TODO: add opacity
+
         row_layout.addWidget(graph_label)
         row_layout.addWidget(lines1_dropdown)
         row_layout.addWidget(lines2_dropdown)
+        # TODO: add opacity
 
         lines1_dropdown.currentTextChanged.connect(partial(self.color_change, source_graph=current_graph_num, subgraph=0))
 
@@ -175,11 +182,15 @@ class PlotTab(QWidget):
                 if widget is not None:
                     widget.deleteLater()
 
+        # reset chosen colors
+        self.chosen_colors = {0: [None, None]}
+
     def clear_fig_only(self):
         empty_fig = go.Figure()
         self.browser.setHtml(empty_fig.to_html(include_plotlyjs="cdn"))
         
-
+        # reset chosen colors
+        # self.chosen_colors = {0: [None, None]}
         
     def color_change(self, value, source_graph, subgraph):
         # TODO: yikes
