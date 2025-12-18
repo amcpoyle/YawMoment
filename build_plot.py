@@ -90,7 +90,7 @@ def build_plt_plot(graph1, graph2, v, vehicle):
     return fig, ax
 
 # CURRENT WORKING FUNCTION
-def build_plot(graph_df, velocity):
+def build_plot(graph_df, velocity, chosen_colors):
     # use plolty traces to build up the plot
     fig = go.Figure()
 
@@ -99,12 +99,22 @@ def build_plot(graph_df, velocity):
     unique_delta1 = list(graph1_subset['delta'].unique())
     unique_beta1 = list(graph1_subset['beta'].unique())
     
+    if chosen_colors[0] is None:
+        graph1_color = 'blue'
+    else:
+        graph1_color = chosen_colors[0]
+
+    if chosen_colors[1] is None:
+        graph2_color = 'red'
+    else:
+        graph2_color = chosen_colors[1]
+
     # should be auto sorted since we were interating through a for loop
     for delta in unique_delta1:
         delta_subset = graph1_subset[graph1_subset['delta'] == delta]
         fig.add_trace(go.Scatter(x=delta_subset['ay'], y=delta_subset['yaw'],
                                  mode='lines',
-                                 marker=dict(color='blue'),
+                                 marker=dict(color=graph1_color),
                                  line_shape='spline',
                                  showlegend=False))
     
@@ -119,22 +129,33 @@ def build_plot(graph_df, velocity):
         beta_subset = graph2_subset[graph2_subset['beta'] == beta]
         fig.add_trace(go.Scatter(x=beta_subset['ay'], y=beta_subset['yaw'],
                                  mode='lines',
-                                 marker=dict(color='red'),
+                                 marker=dict(color=graph2_color),
                                  line_shape='spline',
                                  showlegend=False))
     return fig
 
-def add_plot_trace(current_fig, graph_df, velocity):
+def add_plot_trace(current_fig, graph_df, velocity, chosen_colors):
     fig = current_fig
     graph1_subset = graph_df[graph_df['graph_num'] == 1]
     unique_delta1 = list(graph1_subset['delta'].unique())
     unique_beta1 = list(graph1_subset['beta'].unique())
+   
     
+    if chosen_colors[0] is None:
+        graph1_color = 'blue'
+    else:
+        graph1_color = chosen_colors[0]
+
+    if chosen_colors[1] is None:
+        graph2_color = 'red'
+    else:
+        graph2_color = chosen_colors[1]
+
     for delta in unique_delta1:
         delta_subset = graph1_subset[graph1_subset['delta'] == delta]
         fig.add_trace(go.Scatter(x=delta_subset['ay'], y=delta_subset['yaw'],
                                  mode='lines',
-                                 marker=dict(color='green'),
+                                 marker=dict(color=graph1_color),
                                  line_shape='spline',
                                  showlegend=False))
     
@@ -147,7 +168,7 @@ def add_plot_trace(current_fig, graph_df, velocity):
         beta_subset = graph2_subset[graph2_subset['beta'] == beta]
         fig.add_trace(go.Scatter(x=beta_subset['ay'], y=beta_subset['yaw'],
                                  mode='lines',
-                                 marker=dict(color='orange'),
+                                 marker=dict(color=graph2_color),
                                  line_shape='spline',
                                  showlegend=False))
     return fig 

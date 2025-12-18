@@ -29,9 +29,11 @@ class PlotTab(QWidget):
         super().__init__()
         self.data_tab = data_tab
         self.graph_counter = 0
-        self.colors = ['red', 'blue']
+        self.colors = ['red', 'blue', 'green', 'orange']
+        self.graph_df_list = []
+        self.velocity_list = []
 
-        self.chosen_colors = {}
+        self.chosen_colors = {0: [None, None]}
 
         self.row_layout_list = []
 
@@ -59,6 +61,7 @@ class PlotTab(QWidget):
     def generate_plot(self):
         # TODO: need to pass colors through to main to get them into build_plot
 
+        print("graph counter: ", self.graph_counter)
         # new layout for this row
         row_layout = QHBoxLayout()
 
@@ -78,9 +81,9 @@ class PlotTab(QWidget):
         row_layout.addWidget(lines1_dropdown)
         row_layout.addWidget(lines2_dropdown)
 
-        lines1_dropdown.currentTextChanged.connect(partial(self.color_change, source_grpah=current_graph_num, subgraph=1))
+        lines1_dropdown.currentTextChanged.connect(partial(self.color_change, source_graph=current_graph_num, subgraph=0))
 
-        lines2_dropdown.currentTextChanged.connect(partial(self.color_change, source_graph=current_graph_num, subgraph=2))
+        lines2_dropdown.currentTextChanged.connect(partial(self.color_change, source_graph=current_graph_num, subgraph=1))
 
         self.layout.addLayout(row_layout)
 
@@ -88,19 +91,77 @@ class PlotTab(QWidget):
 
 
         self.graph_df = main(self.data_tab.vehicle_params, self.data_tab.vehicle_params['velocity'])
+        self.graph_df_list.append(self.graph_df)
+        self.velocity_list.append(self.data_tab.vehicle_params['velocity'])
+
         if self.graph_counter == 0:
-            self.fig = build_plot(self.graph_df, self.data_tab.vehicle_params['velocity'])
+            # building a new fig
+            # get graph 0 chosen colors
+            self.fig = build_plot(self.graph_df, self.data_tab.vehicle_params['velocity'], self.chosen_colors[self.graph_counter])
+            print("generate plot chosen colors: ", self.chosen_colors[self.graph_counter])
             html = self.fig.to_html(include_plotlyjs="cdn", full_html=False)
             self.browser.setHtml(html)
             self.graph_counter += 1
         else:
-            # TODO: add traces to the fig that already exists
-            updated_fig = add_plot_trace(self.fig, self.graph_df, self.data_tab.vehicle_params['velocity'])
+            # add traces to the fig that already exists
+            # get graph i chosen colors
+            try:
+                updated_fig = add_plot_trace(self.fig, self.graph_df, self.data_tab.vehicle_params['velocity'], self.chosen_colors[self.graph_counter])
+            except:
+                self.chosen_colors[self.graph_counter] = [None, None]
+                updated_fig = add_plot_trace(self.fig, self.graph_df, self.data_tab.vehicle_params['velocity'], self.chosen_colors[self.graph_counter])
+
             self.fig = updated_fig
             html = self.fig.to_html(include_plotlyjs="cdn", full_html=False)
             self.browser.setHtml(html)
             self.graph_counter += 1
+
+    def generate_new_plot(self):
+        row_layout = QHBoxLayout()
+
+        current_graph_num = self.graph_counter
+        
              
+        # graph_label = QLabel("Graph {}".format(current_graph_num))
+        # lines1_dropdown = QComboBox()
+        # lines1_dropdown.addItems(self.colors)
+        # lines1_dropdown.setCurrentIndex(0)
+        # 
+        # lines2_dropdown = QComboBox()
+        # lines2_dropdown.addItems(self.colors)
+        # lines2_dropdown.setCurrentIndex(1)
+
+        # row_layout.addWidget(graph_label)
+        # row_layout.addWidget(lines1_dropdown)
+        # row_layout.addWidget(lines2_dropdown)
+
+        # lines1_dropdown.currentTextChanged.connect(partial(self.color_change, source_graph=current_graph_num, subgraph=0))
+
+        # lines2_dropdown.currentTextChanged.connect(partial(self.color_change, source_graph=current_graph_num, subgraph=1))
+
+        # self.layout.addLayout(row_layout)
+
+        # self.row_layout_list.append(row_layout)
+        
+        counter = 0
+        for graph_df, velocity in zip(self.graph_df_list, self.velocity_list):
+            if counter == 0:
+                self.fig = build_plot(graph_df, velocity, self.chosen_colors[counter])
+                html = self.fig.to_html(include_plotlyjs="cdn", full_html=False)
+                self.browser.setHtml(html)
+                counter += 1
+            else:
+                try:
+                    updated_fig = add_plot_trace(self.fig, graph_df, velocity, self.chosen_colors[counter])
+                except:
+                    self.chosen_colors[counter] = [None, None]
+                    updated_fig = add_plot_trace(self.fig, graph_df, velocity, self.chosen_colors[counter])
+
+                self.fig = updated_fig
+                html = self.fig.to_html(include_plotlyjs="cdn", full_html=False)
+                self.browser.setHtml(html)
+                counter += 1
+
 
     def clear_plot(self):
         empty_fig = go.Figure()
@@ -114,10 +175,33 @@ class PlotTab(QWidget):
                 if widget is not None:
                     widget.deleteLater()
 
+    def clear_fig_only(self):
+        empty_fig = go.Figure()
+        self.browser.setHtml(empty_fig.to_html(include_plotlyjs="cdn"))
         
-    def color_change(self, source_graph, subgraph):
+
+        
+    def color_change(self, value, source_graph, subgraph):
         # TODO: yikes
-        pass
+        try:
+            self.chosen_colors[source_graph][subgraph] = value
+            print("chosen colors: ", self.chosen_colors[source_graph])
+
+            # clear the trace/graph that we are changing
+            self.clear_fig_only()
+
+            # regenerate the trace/graph that we are changing
+
+            self.generate_new_plot()
+        except:
+            
+            # should not reach?
+            self.chosen_colors[source_graph] = [None, None]
+            self.chosen_colors[source_graph][subgraph] = value
+            print('chosen colors 2: ', self.chosen_colors[source_graph])
+
+            self.clear_fig_only()
+            self.generate_new_plot()
 
 class dataTab(QWidget):
     def __init__(self, title):
