@@ -3,6 +3,9 @@ from main import main
 from Car import Car
 import numpy as np
 from PySide6.QtCore import Qt
+import plotly.graph_objects as go
+from functools import partial
+from build_plot import build_plot, add_plot_trace
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -15,7 +18,8 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QHBoxLayout,
     QFileDialog,
-    QLabel
+    QLabel,
+    QComboBox
 )
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl
@@ -24,26 +28,80 @@ class PlotTab(QWidget):
     def __init__(self, title, data_tab):
         super().__init__()
         self.data_tab = data_tab
+        self.graph_counter = 0
+        colors = ['red', 'blue']
 
         # integrating web engine
         self.browser = QWebEngineView()
+        self.fig = None
+
 
         # add widgets
         self.generate_button = QPushButton("Build Plot")
+        self.clear_button = QPushButton("Clear Plot")
+
         
         # layout
         layout = QVBoxLayout()
         layout.addWidget(self.generate_button)
+        layout.addWidget(self.clear_button)
         layout.addWidget(self.browser)
+
+        row_layout = QHBoxLayout()
+
+        # add a color (TODO: and show) widget for every active graph
+        for i in range(self.graph_counter + 1):
+            current_graph_num = i + 1
+            graph_label = QLabel("Graph {}".format(current_graph_num))
+            lines1_dropdown = QComboBox()
+            lines1_dropdown.addItems(colors)
+            lines1_dropdown.setCurrentIndex(0)
+            
+            lines2_dropdown = QComboBox()
+            lines2_dropdown.addItems(colors)
+            lines2_dropdown.setCurrentIndex(1)
+
+            row_layout.addWidget(graph_label)
+            row_layout.addWidget(lines1_dropdown)
+            row_layout.addWidget(lines2_dropdown)
+
+            lines1_dropdown.currentTextChanged.connect(partial(self.color_change, source_grpah=current_graph_num, subgraph=1))
+
+            lines2_dropdown.currentTextChanged.connect(partial(self.color_change, source_graph=current_graph_num, subgraph=2))
 
         self.setLayout(layout)
 
+        layout.addLayout(row_layout)
+
         self.generate_button.clicked.connect(self.generate_plot)
+        self.clear_button.clicked.connect(self.clear_plot)
 
     def generate_plot(self):
-        html = main(self.data_tab.vehicle_params)
+        # TODO: need to pass colors through to main to get them into build_plot
 
-        self.browser.setHtml(html)
+        self.graph_df = main(self.data_tab.vehicle_params, self.data_tab.vehicle_params['velocity'])
+        if self.graph_counter == 0:
+            self.fig = build_plot(self.graph_df, self.data_tab.vehicle_params['velocity'])
+            html = self.fig.to_html(include_plotlyjs="cdn", full_html=False)
+            self.browser.setHtml(html)
+            self.graph_counter += 1
+        else:
+            # TODO: add traces to the fig that already exists
+            updated_fig = add_plot_trace(self.fig, self.graph_df, self.data_tab.vehicle_params['velocity'])
+            self.fig = updated_fig
+            html = self.fig.to_html(include_plotlyjs="cdn", full_html=False)
+            self.browser.setHtml(html)
+            self.graph_counter += 1
+             
+
+    def clear_plot(self):
+        empty_fig = go.Figure()
+        self.browser.setHtml(empty_fig.to_html(include_plotlyjs="cdn"))
+        self.graph_counter = 0
+
+    def color_change(self, source_graph, subgraph):
+        # TODO: yikes
+        pass
 
 class dataTab(QWidget):
     def __init__(self, title):
@@ -94,6 +152,20 @@ class dataTab(QWidget):
         self.clear_layout(self.form_layout)
         self.inputs.clear()
 
+        new_row_layout = QHBoxLayout()
+
+        velocityLabel = QLabel("velocity")
+        velocityEdit = QLineEdit()
+        window_width = self.window().width()
+        velocityEdit.setMaximumWidth(int(window_width*0.25))
+        velocityEdit.setAlignment(Qt.AlignRight)
+
+        new_row_layout.addWidget(velocityLabel)
+        new_row_layout.addWidget(velocityEdit)
+        self.form_layout.addLayout(new_row_layout)
+        self.inputs['velocity'] = velocityEdit
+        velocityEdit.textChanged.connect(lambda text, k = 'velocity': self.update_car_param('velocity', text))
+
         for key, value in self.vehicle_params.items():
             row_layout = QHBoxLayout()
 
@@ -140,6 +212,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.plotTab, "Plot")
 
         self.setCentralWidget(self.tabs)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

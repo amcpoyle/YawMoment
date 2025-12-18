@@ -5,7 +5,7 @@ class Car:
     car_params = {'cgHeight': None, 'length': None, 'trackwidth': None, 'a': None, 'b': None,
                   'weightDistr': None, 'rearToe': None, 'frontToe': None, 'vehicleMass': None,
                   'LLTD': None, 'rho': None, 'copHeight': None, 'aeroDistr': None, 'dragCoef': None,
-                  'dfCoef': None, 'refArea': None, 'lmuy': None, 'v': None, 'vehicleName': None}
+                  'dfCoef': None, 'refArea': None, 'lmuy': None, 'vehicleName': None}
     # input constants for our tire model
     def __init__(self, data_path):
         self.data_path = data_path

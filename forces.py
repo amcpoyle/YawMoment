@@ -3,8 +3,7 @@ from loadTransfer import loadTransfer
 from tireModel import Pacejka4_Model
 from tireModelConstants import tireConstants
 
-def forces(car_params, AxIn, AyIn, beta, delta, kappa, tire):
-    v = car_params['v']
+def forces(car_params, AxIn, AyIn, beta, delta, kappa, tire, v):
     radius = (v**2)/(AyIn*9.81)
     weight = car_params['vehicleMass']*9.8
     psi_dot = AyIn/v; # yaw rate

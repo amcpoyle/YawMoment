@@ -5,13 +5,11 @@ from forces import forces
 import plotly.express as px
 import pandas as pd
 import matplotlib.pyplot as plt
-def main(car_params):
+def main(car_params, velocity):
    
     AxIn = 0
 
-    v = car_params['v']
-
-    print("CG HEIGHT: ", car_params['cgHeight'])
+    v = velocity
 
     # some other variables that are calculated from vehicle params
     downforce = 0.5*car_params['rho']*car_params['refArea']*car_params['dfCoef']*(v**2)
@@ -55,7 +53,7 @@ def main(car_params):
                 AyIn = 0.7*Ay + 0.3*AyInPrev
 
                 # calculate all of our forces etc
-                Ax, Ay, fx, fy, Y, tire_fx, tire_fy, tire_fz, drag, radius = forces(car_params, AxIn, AyIn, beta, delta, kappa, tire)
+                Ax, Ay, fx, fy, Y, tire_fx, tire_fy, tire_fz, drag, radius = forces(car_params, AxIn, AyIn, beta, delta, kappa, tire, v)
 
             print("Yaw: ", Y)
             graph_ay.append(Ay)
@@ -78,10 +76,9 @@ def main(car_params):
             while abs(AyIn - Ay) > tolerance:
                 AyInPrev = AyIn
                 AyIn = 0.7*Ay+0.3*AyInPrev
-                Ax, Ay, fx, fy, Y, tire_fx, tire_fy, tire_fz, drag, radius = forces(car_params, AxIn, AyIn, beta, delta, kappa, tire)
+                Ax, Ay, fx, fy, Y, tire_fx, tire_fy, tire_fz, drag, radius = forces(car_params, AxIn, AyIn, beta, delta, kappa, tire, v)
                
 
-            print("Yaw: ", Y)
             graph_ay.append(Ay)
             graph_yaw.append(Y)
             graph_num.append(2)
@@ -94,10 +91,13 @@ def main(car_params):
     graph_df = pd.DataFrame({'ay': graph_ay, 'yaw': graph_yaw, 'graph_num': graph_num, 'beta': graph_beta, 'delta': graph_delta})
 
     print('max Ay: ', max(graph_df['ay']))
+    print("max yaw: ", max(graph_df['yaw']))
+
+    return graph_df
     # generate the plot
-    fig = build_plot(graph_df)
-    html = fig.to_html(include_plotlyjs="cdn", full_html=False)
-    return html
+    # fig = build_plot(graph_df)
+    # html = fig.to_html(include_plotlyjs="cdn", full_html=False)
+    # return fig
     # fig.show()
     
 # if __name__ == "__main__":

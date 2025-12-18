@@ -90,7 +90,7 @@ def build_plt_plot(graph1, graph2, v, vehicle):
     return fig, ax
 
 # CURRENT WORKING FUNCTION
-def build_plot(graph_df):
+def build_plot(graph_df, velocity):
     # use plolty traces to build up the plot
     fig = go.Figure()
 
@@ -105,7 +105,8 @@ def build_plot(graph_df):
         fig.add_trace(go.Scatter(x=delta_subset['ay'], y=delta_subset['yaw'],
                                  mode='lines',
                                  marker=dict(color='blue'),
-                                 line_shape='spline'))
+                                 line_shape='spline',
+                                 showlegend=False))
     
     # graph 2
 
@@ -119,5 +120,34 @@ def build_plot(graph_df):
         fig.add_trace(go.Scatter(x=beta_subset['ay'], y=beta_subset['yaw'],
                                  mode='lines',
                                  marker=dict(color='red'),
-                                 line_shape='spline'))
+                                 line_shape='spline',
+                                 showlegend=False))
     return fig
+
+def add_plot_trace(current_fig, graph_df, velocity):
+    fig = current_fig
+    graph1_subset = graph_df[graph_df['graph_num'] == 1]
+    unique_delta1 = list(graph1_subset['delta'].unique())
+    unique_beta1 = list(graph1_subset['beta'].unique())
+    
+    for delta in unique_delta1:
+        delta_subset = graph1_subset[graph1_subset['delta'] == delta]
+        fig.add_trace(go.Scatter(x=delta_subset['ay'], y=delta_subset['yaw'],
+                                 mode='lines',
+                                 marker=dict(color='green'),
+                                 line_shape='spline',
+                                 showlegend=False))
+    
+    graph2_subset = graph_df[graph_df['graph_num'] == 2]
+    unique_delta2 = list(graph2_subset['delta'].unique())
+    unique_beta2 = list(graph2_subset['beta'].unique())
+    
+    # should be auto sorted since we were interating through a for loop
+    for beta in unique_beta2:
+        beta_subset = graph2_subset[graph2_subset['beta'] == beta]
+        fig.add_trace(go.Scatter(x=beta_subset['ay'], y=beta_subset['yaw'],
+                                 mode='lines',
+                                 marker=dict(color='orange'),
+                                 line_shape='spline',
+                                 showlegend=False))
+    return fig 
